@@ -1,25 +1,55 @@
 # 🛡️ Microservicio de Autenticación (AUTH)
 
-Este microservicio permite autenticar usuarios contra el **Directorio Activo (AD)** corporativo, proporcionando un mecanismo de inicio de sesión seguro y centralizado para las aplicaciones internas de la empresa.
+Este microservicio permite autenticar usuarios contra el **Active Directory (AD)** corporativo utilizando el protocolo **LDAP**, ofreciendo un inicio de sesión seguro, centralizado y sin almacenamiento de credenciales. Está pensado para integrarse con otros servicios internos mediante tokens JWT firmados.
 
-## ✨ Características principales
+---
 
-* ✅ Autenticación de usuarios vía **LDAP/Active Directory**.
-* 🔒 Emisión de **JSON Web Tokens (JWT)** para manejo de sesiones.
-* 🔧 Configuración flexible a través de **variables de entorno**.
-* 🧩 Fácil integración con otros servicios internos.
-* 🚫 No almacena credenciales ni información sensible de los usuarios.
+## ✨ Características Principales
+
+* ✅ Autenticación de usuarios mediante **LDAP/Active Directory**.
+* 🔒 Emisión de **JSON Web Tokens (JWT)** para la gestión de sesiones.
+* 🧩 Integración sencilla con microservicios internos vía cabeceras autenticadas.
+* 🔧 Configuración por medio de variables de entorno.
+* 🚫 No se almacenan contraseñas ni información sensible de los usuarios.
+
+---
 
 ## 🔐 Seguridad
 
-* ✨ Las credenciales del usuario **no se almacenan** en ningún momento.
-* 🔐 Los tokens de acceso son firmados con **JWT**, lo que permite validación sin estado.
-* 🛡️ Se siguen **buenas prácticas** de seguridad en autenticación y gestión de sesiones.
+* 🔐 Las credenciales se validan directamente contra el **AD** y **no se almacenan** en ningún punto.
+* 📜 Los tokens son firmados con clave privada y pueden incluir expiración configurable.
+* 🛡️ Se implementan buenas prácticas de seguridad:
 
-> **Importante:** Asegúrate de usar una conexión segura (LDAPS) si el entorno lo permite, para proteger la confidencialidad de las credenciales durante la autenticación.
+  * Validación por dominio autorizado.
+  * Tokens con expiración y firma segura.
+  * Uso de **LDAPS** para cifrar el canal de autenticación.
+
+---
+
+## ⚙️ Variables de Entorno
+
+Este servicio utiliza variables de entorno para su configuración. Se recomienda crear un archivo `.env` en la raíz del proyecto.
+
+### 📄 Ejemplo de `.env`:
+
+```env
+NODE_ENV=development
+CLIENT_ORIGIN=http://localhost:5173
+
+PORT=
+LDAP_PORT=
+LDAP_SERVER=
+LDAP_DOMAIN=
+LDAP_BASE_DN=DC=dominio,DC=local
+
+JWT_SECRET=
+```
+
+---
 
 ## 🧑‍💻 Mantenimiento
 
-Este servicio fue desarrollado por: **Andrés Cardona**
+Desarrollado por el equipo TIC con **Andrés Cardona**
+
 
 
