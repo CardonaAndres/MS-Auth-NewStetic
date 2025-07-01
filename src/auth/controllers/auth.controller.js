@@ -1,14 +1,22 @@
-import { JWT } from '../libs/jwt/JWT.js'
 import ActiveDirectory from "activedirectory2";
+import { JWT } from '../libs/jwt/JWT.js'
+import { AllowedUsers } from '../utils/defineAllowedUsers.js';
 
 export class AuthController {
     static async login(req, res, next) {
         try {
 
-            const { username, password } = req.body;
+            const { username, password, appName } = req.body;
+            const usernamesAllowed = AllowedUsers.defineAllowedUsers(appName);
 
             if(!username || !password) {
                 const err = new Error('❌ Usuario y contraseña son requeridos');
+                err.status = 400;
+                throw err;
+            }
+
+            if(!usernamesAllowed.includes(username)){
+                const err = new Error('Usuario no valido para este aplicativo');
                 err.status = 400;
                 throw err;
             }
@@ -81,13 +89,4 @@ export class AuthController {
             next(err);
         }
     }
-
-    static async logout(req, res, next) {
-        try {
-
-        } catch (err) {
-            next(err);
-        }
-    }
-    
 }
