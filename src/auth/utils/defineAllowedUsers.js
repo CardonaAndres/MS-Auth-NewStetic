@@ -1,10 +1,11 @@
 export class AllowedUsers {
     static defineAllowedUsers(appName) {
-        //Usuarios generales
+        //Usuarios generales (TIC) que pueden acceder a todos los aplicativos
         const allowedUsers = [
             'ptic',
             'ptic2',
-            'stapias'
+            'stapias',
+            'amjimenez'
         ];
 
         switch (appName) {
@@ -13,7 +14,15 @@ export class AllowedUsers {
                 allowedUsers.push(
 
                 );
-                break;
+            break;
+
+            case 'BUYORDER':
+                // Usuarios unicos para el aplicativo de BuyOrder
+                allowedUsers.push(
+
+                );
+            break;
+
             default:
                 const err = new Error('App desconocida');
                 err.status = 404;

@@ -1,49 +1,64 @@
-# 🛡️ Microservicio de Autenticación (AUTH)
+# 🛡️ Microservicio de Autenticación (AUTH) — New Stetic S.A.
 
-Este microservicio permite autenticar usuarios contra el **Active Directory (AD)** corporativo utilizando el protocolo **LDAP**, ofreciendo un inicio de sesión seguro, centralizado y sin almacenamiento de credenciales. Está pensado para integrarse con otros servicios internos mediante tokens JWT firmados.
+Este microservicio es el núcleo del sistema de autenticación centralizado de **New Stetic S.A.**, diseñado para validar usuarios mediante **Active Directory (AD)** a través del protocolo **LDAP**. Proporciona un inicio de sesión seguro, sin almacenamiento local de credenciales, y con una arquitectura extensible para soportar futuros métodos de autenticación (como OAuth, correo electrónico, etc.).
 
 ---
 
 ## ✨ Características Principales
 
-* ✅ Autenticación de usuarios mediante **LDAP/Active Directory**.
-* 🔒 Emisión de **JSON Web Tokens (JWT)** para la gestión de sesiones.
-* 🧩 Integración sencilla con microservicios internos vía cabeceras autenticadas.
-* 🔧 Configuración por medio de variables de entorno.
+* ✅ Autenticación segura contra **LDAP / Active Directory**.
+* 🔒 Emisión de **JSON Web Tokens (JWT)** para el manejo de sesiones.
+* 🧩 Integración fluida con otros microservicios mediante cabeceras autenticadas.
+* 🏗️ Arquitectura modular y extensible.
+* ⚙️ Configuración 100% basada en variables de entorno.
 * 🚫 No se almacenan contraseñas ni información sensible de los usuarios.
+
+---
+
+## 🚀 Endpoint Principal
+
+El servicio expone un único endpoint para autenticación, el cual se conecta directamente con el **Directorio Activo (AD)**. Gracias a su arquitectura modular, puede adaptarse fácilmente para incorporar otros métodos de autenticación en el futuro (como autenticación vía correo electrónico, redes sociales, etc.).
 
 ---
 
 ## 🔐 Seguridad
 
-* 🔐 Las credenciales se validan directamente contra el **AD** y **no se almacenan** en ningún punto.
-* 📜 Los tokens son firmados con clave privada y pueden incluir expiración configurable.
-* 🛡️ Se implementan buenas prácticas de seguridad:
+Este servicio implementa buenas prácticas de seguridad para proteger las credenciales y los tokens de sesión:
 
-  * Validación por dominio autorizado.
-  * Tokens con expiración y firma segura.
-  * Uso de **LDAPS** para cifrar el canal de autenticación.
+* Las credenciales del usuario se validan **directamente contra el AD** y **nunca se almacenan**.
+* Los tokens JWT son **firmados con clave privada** y cuentan con una expiración configurable.
+* Se implementan mecanismos de protección adicionales:
+
+  * Validación de dominios autorizados.
+  * Uso de **LDAPS** para cifrado del canal de autenticación.
+  * Expiración y firma segura de los tokens.
 
 ---
 
-## ⚙️ Variables de Entorno
+## ⚙️ Configuración por Variables de Entorno
 
-Este servicio utiliza variables de entorno para su configuración. Se recomienda crear un archivo `.env` en la raíz del proyecto.
+Toda la configuración del servicio se gestiona mediante variables de entorno. Se recomienda crear un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 
-### 📄 Ejemplo de `.env`:
+### 📄 Ejemplo de `.env`
 
 ```env
 NODE_ENV=development
-CLIENT_ORIGIN=http://localhost:5173
+
+# Client URLs
+SST_CLIENT=
+BUY_ORDER_CLIENT=
 
 PORT=
+
 LDAP_PORT=
-LDAP_SERVER=
-LDAP_DOMAIN=
+LDAP_SERVER=ldap://dominio.local
+LDAP_DOMAIN=DOMINIO
 LDAP_BASE_DN=DC=dominio,DC=local
 
-JWT_SECRET=
+JWT_SECRET=clave_super_secreta
 ```
+
+> 🔐 Asegúrate de **no exponer este archivo** en sistemas de control de versiones.
 
 ---
 
@@ -51,5 +66,4 @@ JWT_SECRET=
 
 Desarrollado por el equipo TIC con **Andrés Cardona**
 
-
-
+---
