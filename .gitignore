@@ -8,7 +8,7 @@ yarn-error.log
 .idea/
 .vscode/
 coverage/
-.env.*
+.env
 *.local
 *.cache
 *.tmp

@@ -39,27 +39,6 @@ Este servicio implementa buenas prácticas de seguridad para proteger las creden
 
 Toda la configuración del servicio se gestiona mediante variables de entorno. Se recomienda crear un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 
-### 📄 Ejemplo de `.env`
-
-```env
-NODE_ENV=development
-
-# Client URLs
-SST_CLIENT=
-BUY_ORDER_CLIENT=
-
-PORT=
-
-LDAP_PORT=
-LDAP_SERVER=ldap://dominio.local
-LDAP_DOMAIN=DOMINIO
-LDAP_BASE_DN=DC=dominio,DC=local
-
-JWT_SECRET=clave_super_secreta
-```
-
-> 🔐 Asegúrate de **no exponer este archivo** en sistemas de control de versiones.
-
 ---
 
 ## 🧑‍💻 Mantenimiento
