@@ -1,24 +1,19 @@
 import ActiveDirectory from "activedirectory2";
 import { JWT } from '../libs/jwt/JWT.js'
 import { AllowedUsers } from '../utils/defineAllowedUsers.js';
+import { BukAPI } from "../utils/bukApi.js";
+import { throwError } from "../../utils/throwError.js";
 
 export class AuthController {
-    static async login(req, res, next) {
+    static async loginByDA(req, res, next) {
         try {
             const { username, password, appName } = req.body;
             const usernamesAllowed = AllowedUsers.defineAllowedUsers(appName);
 
-            if(!username || !password) {
-                const err = new Error('❌ Usuario y contraseña son requeridos');
-                err.status = 400;
-                throw err;
-            }
+            if(!username || !password) throwError('Usuario y contraseña son requeridos', 400)
 
-            if(!usernamesAllowed.includes(username)){
-                const err = new Error('Usuario no valido para este aplicativo');
-                err.status = 400;
-                throw err;
-            }
+            if(!usernamesAllowed.includes(username)) 
+                throwError('Usuario no valido para este aplicativo', 409)
 
             const userConfig = { 
                 url: 'ldap://' + process.env.LDAP_SERVER,
@@ -82,6 +77,43 @@ export class AuthController {
 
                     });
                 });
+
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async loginByBuk(req, res, next){
+        try {
+            const { documentNumber } = req.body;
+            const allowedRoles = req.query?.allowedRoles?.split(',') || [];
+
+            if(!documentNumber || documentNumber?.length < 5) throwError('Número de documento invalido', 400)
+
+            const { data: userData, success, message } = await BukAPI.getUser(documentNumber);
+
+            if(!success) throwError(message, 400)
+
+            if(!userData[0]) throwError('El usuario no ha sido encontrado', 404)
+
+            if(allowedRoles.length > 0){
+                const { data: roles, success, message } = await BukAPI.getRoles();
+
+                if(!success) throwError(message, 400)
+
+                const rolesIDs = new Set(roles?.map(r => r.id));
+                const allIdAreValited = allowedRoles.every(id => rolesIDs.has(parseInt(id)));
+                
+                if(!allIdAreValited) throwError('Error al validar los roles', 400)
+            }
+        
+            const token = await JWT.createTokenAccess(userData[0] , "15m");
+
+            return res.status(200).json({
+                message: '✅ Usuario autenticado correctamente',
+                userData: userData[0],
+                token
+            });
 
         } catch (err) {
             next(err);
