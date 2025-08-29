@@ -1,8 +1,12 @@
+import NodeCache from "node-cache";
 import ActiveDirectory from "activedirectory2";
 import { JWT } from '../libs/jwt/JWT.js'
 import { AllowedUsers } from '../utils/defineAllowedUsers.js';
 import { BukAPI } from "../utils/bukApi.js";
 import { throwError } from "../../utils/throwError.js";
+import { ADErrorMessages, DEFAULT_AD_ERROR } from "../configs/adErrorMessages.js";
+
+const rolesCache = new NodeCache({ stdTTL: 3600 });
 
 export class AuthController {
     static async loginByDA(req, res, next) {
@@ -26,24 +30,20 @@ export class AuthController {
 
                 ad.authenticate(userConfig.username, password, (err, auth) => {
                     if (err) {
-                        let msg = '❌ Error de autenticación. Intente nuevamente o comuníquese con la mesa de ayuda.';
-                        if (err.message) {
-                            if (err.message.includes('775')) 
-                                msg = '❌ Usuario bloqueado. Comuníquese con la mesa de ayuda.'
+                        let msg = DEFAULT_AD_ERROR;
 
-                            if (err.message.includes('52e')) msg = '❌ Usuario o contraseña incorrectos';
-                            
-                            if (err.message.includes('532')) msg = '❌ La contraseña ha expirado. Debe cambiarla.';  
+                        if (err.message) {   
+                         const code = Object.keys(ADErrorMessages).find(c => err.message.includes(c));
+                         if (code) msg = ADErrorMessages[code];
                         }
 
                         return res.status(401).json({ message: msg });
                     }
 
-                    if(!auth) return res.status(401).json({ message: '❌ Usuario o contraseña incorrectos' })
+                    if (!auth) return res.status(401).json({ message: ADErrorMessages["52e"] });
 
                     ad.findUser({ attributes: ["*"] }, username, (err, user) => {
-                        if (err || !user) 
-                            return res.status(401).json({ message: '❌ Usuario o contraseña incorrectos' });
+                        if (err || !user) return res.status(401).json({ message: ADErrorMessages["52e"] });
                     
                         const userInfo = {
                             displayName: user.displayName || username,
@@ -61,7 +61,7 @@ export class AuthController {
                             });
 
                             return res.status(200).json({
-                                message: '✅ Usuario autenticado correctamente',
+                                message: 'Usuario autenticado correctamente',
                                 user : {
                                     ...userInfo,
                                     token
@@ -70,7 +70,7 @@ export class AuthController {
                         
                         }).catch(err => {
                             return res.status(500).json({
-                                message: '❌ Error al generar el token de acceso',
+                                message: 'Error al generar el token de acceso',
                                 error: err.message
                             });
                         });
@@ -104,9 +104,16 @@ export class AuthController {
             if(!userData[0]) throwError('El usuario no ha sido encontrado', 404);
 
             if(allowedRoles.length > 0){
-                const { data: roles, success, message } = await BukAPI.getRoles();
+                let roles = rolesCache.get("roles");
 
-                if(!success) throwError(message, 400)
+                if (!roles) {
+                    const { data, success, message } = await BukAPI.getRoles();
+
+                    if (!success) throwError(message, 400);
+
+                    roles = data;
+                    rolesCache.set("roles", roles);
+                }
 
                 const rolesIDs = new Set(roles?.map(r => r.id));
                 const allIdAreValited = allowedRoles.every(id => rolesIDs.has(id));
