@@ -85,16 +85,23 @@ export class AuthController {
 
     static async loginByBuk(req, res, next){
         try {
-            const { documentNumber } = req.body;
-            const allowedRoles = req.query?.allowedRoles?.split(',') || [];
+            const allowedRoles = req.query?.allowedRoles?.split(',') || []
 
-            if(!documentNumber || documentNumber?.length < 5) throwError('Número de documento invalido', 400)
+            allowedRoles.forEach((role, i) => {
+                if(typeof role !== 'string' || isNaN(parseInt(role, 10))) 
+                    throwError('Roles permitidos invalidos', 400)
 
-            const { data: userData, success, message } = await BukAPI.getUser(documentNumber);
+                allowedRoles[i] = parseInt(role, 10);
+            });
 
-            if(!success) throwError(message, 400)
+            if(!req.body.documentNumber || req.body.documentNumber?.length < 5) 
+                throwError('Número de documento invalido', 400)
 
-            if(!userData[0]) throwError('El usuario no ha sido encontrado', 404)
+            const { data: userData, success, message } = await BukAPI.getUser(req.body.documentNumber);
+
+            if(!success) throwError(message, 400);
+
+            if(!userData[0]) throwError('El usuario no ha sido encontrado', 404);
 
             if(allowedRoles.length > 0){
                 const { data: roles, success, message } = await BukAPI.getRoles();
@@ -102,12 +109,16 @@ export class AuthController {
                 if(!success) throwError(message, 400)
 
                 const rolesIDs = new Set(roles?.map(r => r.id));
-                const allIdAreValited = allowedRoles.every(id => rolesIDs.has(parseInt(id)));
+                const allIdAreValited = allowedRoles.every(id => rolesIDs.has(id));
                 
-                if(!allIdAreValited) throwError('Error al validar los roles', 400)
+                if(!allIdAreValited) throwError('Error al validar los roles', 400);
+
+                if(!allowedRoles.includes(userData[0]?.current_job?.role.role_family?.id))
+                    throwError('El usuario no tiene el rol permitido', 409);
+
             }
         
-            const token = await JWT.createTokenAccess(userData[0] , "15m");
+            const token = await JWT.createTokenAccess(userData[0], "15m");
 
             return res.status(200).json({
                 message: '✅ Usuario autenticado correctamente',
