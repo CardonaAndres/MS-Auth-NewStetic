@@ -1,5 +1,8 @@
+import { throwError } from '../../app/utils/throwError.js'
+import { UserSstModel } from '../../users/sst/models/user.sst.model.js';
+
 export class AllowedUsers {
-    static defineAllowedUsers(appName) {
+    static async defineAllowedUsers(appName) {
         const allowedUsers = [
             'ptic',
             'ptic2',
@@ -9,10 +12,12 @@ export class AllowedUsers {
 
         switch (appName) {
             case 'SST':
-                allowedUsers.push(
-                    'lvargas',
-                    'crestrepo'
-                );
+                try {
+                    const users = await UserSstModel.getUsersAllowed();
+                    users.map(user => allowedUsers.push(user.username));
+                } catch (err) {
+                    throwError(err.message | 'Error al consultar los usuarios', 500);
+                }
             break;
 
             case 'BUYORDER':

@@ -2,7 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import AuthRouter from '../auth/routes/auth.routes.js';
+import AuthRouter from '../../auth/routes/auth.routes.js';
 import { errorHandler } from '../middlewares/errorHandler.js';
 
 const app = express();

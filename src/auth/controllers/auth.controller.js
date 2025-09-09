@@ -2,9 +2,9 @@ import NodeCache from "node-cache";
 import ActiveDirectory from "activedirectory2";
 import { JWT } from '../libs/jwt/JWT.js'
 import { AllowedUsers } from '../utils/defineAllowedUsers.js';
-import { BukAPI } from "../utils/bukApi.js";
-import { throwError } from "../../utils/throwError.js";
-import { ADErrorMessages, DEFAULT_AD_ERROR } from "../configs/adErrorMessages.js";
+import { BukAPI } from "../services/buk.js";
+import { throwError } from "../../app/utils/throwError.js";
+import { ADErrorMessages, DEFAULT_AD_ERROR } from "../utils/adErrorMessages.js";
 
 const rolesCache = new NodeCache({ stdTTL: 3600 });
 
@@ -12,7 +12,7 @@ export class AuthController {
     static async loginByDA(req, res, next) {
         try {
             const { username, password, appName } = req.body;
-            const usernamesAllowed = AllowedUsers.defineAllowedUsers(appName);
+            const usernamesAllowed = await AllowedUsers.defineAllowedUsers(appName);
 
             if(!username || !password) throwError('Usuario y contraseña son requeridos', 400)
 
