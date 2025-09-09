@@ -6,13 +6,23 @@ import { BukAPI } from "../services/buk.js";
 import { throwError } from "../../app/utils/throwError.js";
 import { ADErrorMessages, DEFAULT_AD_ERROR } from "../utils/adErrorMessages.js";
 
+const usersCache = new NodeCache({ stdTTL: 1800 });
 const rolesCache = new NodeCache({ stdTTL: 3600 });
 
 export class AuthController {
     static async loginByDA(req, res, next) {
         try {
             const { username, password, appName } = req.body;
-            const usernamesAllowed = await AllowedUsers.defineAllowedUsers(appName);
+
+            let usernamesAllowed = usersCache.get(appName);
+
+            if (!usernamesAllowed) {
+                usernamesAllowed = await AllowedUsers.defineAllowedUsers(appName);
+                usersCache.set(appName, usernamesAllowed); 
+            }
+
+            if (!usernamesAllowed.includes(username)) 
+                throwError('Usuario no válido para este aplicativo', 409);
 
             if(!username || !password) throwError('Usuario y contraseña son requeridos', 400)
 
@@ -28,55 +38,55 @@ export class AuthController {
 
             const ad = new ActiveDirectory(userConfig);
 
-                ad.authenticate(userConfig.username, password, (err, auth) => {
-                    if (err) {
-                        let msg = DEFAULT_AD_ERROR;
+            ad.authenticate(userConfig.username, password, (err, auth) => {
+                if (err) {
+                    let msg = DEFAULT_AD_ERROR;
 
-                        if (err.message) {   
-                         const code = Object.keys(ADErrorMessages).find(c => err.message.includes(c));
-                         if (code) msg = ADErrorMessages[code];
-                        }
-
-                        return res.status(401).json({ message: msg });
+                    if (err.message) {   
+                        const code = Object.keys(ADErrorMessages).find(c => err.message.includes(c));
+                        if (code) msg = ADErrorMessages[code];
                     }
 
-                    if (!auth) return res.status(401).json({ message: ADErrorMessages["52e"] });
+                    return res.status(401).json({ message: msg });
+                }
 
-                    ad.findUser({ attributes: ["*"] }, username, (err, user) => {
-                        if (err || !user) return res.status(401).json({ message: ADErrorMessages["52e"] });
-                    
-                        const userInfo = {
-                            displayName: user.displayName || username,
-                            username: username,
-                            department: user.department,
-                            cn: user.cn || '',
-                            sn: user.sn || '',
-                            givenName: user.givenName || '',
-                            mail: user.userPrincipalName || '',
-                        };
+                if (!auth) return res.status(401).json({ message: ADErrorMessages["52e"] });
 
-                        JWT.createTokenAccess(userInfo).then(token => {
-                            res.cookie('token', token, {
-                                maxAge: 1000 * 60 * 60,
-                            });
+                ad.findUser({ attributes: ["*"] }, username, (err, user) => {
+                    if (err || !user) return res.status(401).json({ message: ADErrorMessages["52e"] });
+                
+                    const userInfo = {
+                        displayName: user.displayName || username,
+                        username: username,
+                        department: user.department,
+                        cn: user.cn || '',
+                        sn: user.sn || '',
+                        givenName: user.givenName || '',
+                        mail: user.userPrincipalName || '',
+                    };
 
-                            return res.status(200).json({
-                                message: 'Usuario autenticado correctamente',
-                                user : {
-                                    ...userInfo,
-                                    token
-                                }
-                            });
-                        
-                        }).catch(err => {
-                            return res.status(500).json({
-                                message: 'Error al generar el token de acceso',
-                                error: err.message
-                            });
+                    JWT.createTokenAccess(userInfo).then(token => {
+                        res.cookie('token', token, {
+                            maxAge: 1000 * 60 * 60,
                         });
 
+                        return res.status(200).json({
+                            message: 'Usuario autenticado correctamente',
+                            user : {
+                                ...userInfo,
+                                token
+                            }
+                        });
+                    
+                    }).catch(err => {
+                        return res.status(500).json({
+                            message: 'Error al generar el token de acceso',
+                            error: err.message
+                        });
                     });
+
                 });
+            });
 
         } catch (err) {
             next(err);
