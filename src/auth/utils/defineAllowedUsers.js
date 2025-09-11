@@ -14,9 +14,9 @@ export class AllowedUsers {
             case 'SST':
                 try {
                     const users = await UserSstModel.getUsersAllowed();
-                    users.map(user => allowedUsers.push(user.username));
+                    return users.map(user => user.username); 
                 } catch (err) {
-                    throwError(err.message | 'Error al consultar los usuarios', 500);
+                    throwError(err.message || 'Error al consultar los usuarios', 500);
                 }
             break;
 
@@ -27,9 +27,7 @@ export class AllowedUsers {
             break;
 
             default:
-                const err = new Error('App desconocida');
-                err.status = 404;
-                throw err; 
+                throwError('App desconocida', 404)
         }
 
         return allowedUsers
