@@ -68,6 +68,7 @@ export class AuthController {
                     JWT.createTokenAccess(userInfo).then(token => {
                         res.cookie('token', token, {
                             maxAge: 1000 * 60 * 60,
+                            sameSite: "None",  
                         });
 
                         return res.status(200).json({
