@@ -5,7 +5,8 @@ export class ConnDataBase {
         this.pool = null;
         this.databases = [
             String(process.env.DB_COMP_NAME),
-            String(process.env.DB_SST_NAME)
+            String(process.env.DB_SST_NAME),
+            String(process.env.DB_BUYORDER_NAME)
         ];
     }
 
@@ -46,6 +47,29 @@ export class ConnDataBase {
                         password: process.env.DB_SST_PASSWORD,
                         server: process.env.DB_SST_SERVER,
                         database: process.env.DB_SST_NAME,
+                        options: {
+                            encrypt: false,
+                            trustServerCertificate: true 
+                        }
+                    });
+
+                    pool.on('connect', () => console.log('✓ Conexión exitosa a SST'));
+                    pool.on('error', (err) => console.error('Error en la conexión a SST: ', err.message));
+
+                    this.pool = pool.connect();
+                    return pool;
+
+                } catch (err) {
+                    console.error('Error al conectar a la base de datos:', err);
+                    throw err;
+                } 
+
+            case String(process.env.DB_BUYORDER_NAME):
+                try {
+                    const pool = new sql.ConnectionPool({
+                        user: process.env.DB_BUYORDER_USER,
+                        password: process.env.DB_BUYORDER_PASSWORD,
+                        server: process.env.DB_BUYORDER_SERVER,
                         options: {
                             encrypt: false,
                             trustServerCertificate: true 
